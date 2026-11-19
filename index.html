@@ -1,124 +1,410 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <base target="_top">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MM Intelligence - Leitor QR Code</title>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <title>MM Intelligence — Gestão de Manutenção</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0c1931;
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
-    h2 { color: #fff; }
-    #reader {
-      max-width: 400px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    button, a {
-      display: block;
-      box-sizing: border-box;
-      width: 100%;
-      max-width: 400px;
-      margin: 12px auto;
-      padding: 15px;
-      border: 0;
-      border-radius: 10px;
-      background: #2167f4;
-      color: white;
-      font-size: 16px;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    #resultado {
-      overflow-wrap: anywhere;
-      margin: 16px auto;
-      max-width: 400px;
-    }
+    :root {--navy:#0c1931;--navy2:#142644;--blue:#2167f4;--blue-soft:#e9f0ff;--bg:#f4f7fb;--card:#fff;--text:#17253b;--muted:#67758a;--line:#e3eaf3;--green:#138c63;--yellow:#b27610;--red:#d64049;--radius:16px}
+    *{box-sizing:border-box}
+    body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .layout{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr)}
+    .sidebar{background:var(--navy);color:#fff;padding:27px 20px;display:flex;flex-direction:column;gap:25px}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19px;letter-spacing:.2px}
+    .brand-logo{width:42px;height:42px;border-radius:13px;background:#2368e9;display:grid;place-items:center;font-size:23px}
+    .brand-sub{font-size:11px;font-weight:500;color:#95aed3;margin-top:3px;letter-spacing:.2px}
+    .nav-title{font-size:11px;letter-spacing:1.5px;color:#728bad;font-weight:800;text-transform:uppercase;margin:10px 12px}
+    .nav-btn{width:100%;display:flex;gap:11px;align-items:center;text-align:left;border:0;background:transparent;color:#bfcce2;padding:12px 13px;border-radius:10px;font-weight:650}
+    .nav-btn.active{background:#243c61;color:#fff}
+    .nav-btn:hover{background:#1b3152;color:#fff}
+    .side-foot{margin-top:auto;color:#8ba4ca;font-size:12px;padding:16px 10px 0;border-top:1px solid #2c4161}
+    .main{min-width:0;padding:34px clamp(18px,3vw,48px) 60px;max-width:1700px;width:100%;margin:0 auto}
+    .top{display:flex;gap:15px;align-items:flex-start;justify-content:space-between;margin-bottom:26px}
+    h1{font-size:clamp(25px,3vw,34px);line-height:1.16;margin:3px 0 7px;letter-spacing:-.8px}
+    .eyebrow{color:var(--blue);font-weight:800;font-size:11px;letter-spacing:1.3px;text-transform:uppercase}
+    .muted{color:var(--muted)}
+    .right-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+    .btn{border:1px solid var(--line);border-radius:10px;min-height:39px;padding:9px 13px;font-weight:700;color:var(--text);background:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+    .btn.primary{color:#fff;background:var(--blue);border-color:var(--blue)}
+    .btn:hover{filter:brightness(.96)}
+    .btn:disabled{opacity:.55;cursor:default}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}
+    .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:21px;position:relative;box-shadow:0 8px 20px rgba(15,33,61,.025)}
+    .stat .value{font-weight:830;font-size:33px;line-height:1.15;margin:13px 0 3px;letter-spacing:-1px}
+    .stat .lbl{font-size:12px;color:var(--muted);font-weight:700}
+    .stat-icon{position:absolute;right:18px;top:18px;width:32px;height:32px;border-radius:10px;background:#eaf1fc;display:grid;place-items:center;font-size:17px}
+    .stat.red .value{color:var(--red)}.stat.yellow .value{color:var(--yellow)}.stat.green .value{color:var(--green)}
+    .panel{background:#fff;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 9px 25px rgba(15,33,61,.025);overflow:hidden}
+    .panel-top{padding:23px 24px 17px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .panel h2{margin:0;font-size:17px;letter-spacing:-.3px}.caption{font-size:12px;color:var(--muted);margin:4px 0 0}
+    .filters{display:flex;gap:7px;flex-wrap:wrap;margin:0 24px 16px}
+    .filter{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;color:var(--muted);font-size:12px;font-weight:720}
+    .filter.active{color:var(--blue);border-color:#bcd0ff;background:#eef4ff}
+    .searchbox{position:relative;max-width:320px;min-width:180px;flex:1}
+    .searchbox input{width:100%;padding:10px 12px 10px 33px;border:1px solid var(--line);border-radius:10px;background:#f9fbff;outline:none}
+    .searchbox input:focus{border-color:#7da8ff;box-shadow:0 0 0 3px #dce8ff}
+    .searchbox span{position:absolute;left:11px;top:9px;opacity:.55}
+    .table-wrap{overflow:auto}
+    table{border-collapse:collapse;width:100%;min-width:840px;text-align:left}
+    thead{background:#f8fafd;color:#68778c;text-transform:uppercase;letter-spacing:.6px;font-size:10px}
+    th{padding:13px 18px;white-space:nowrap;font-weight:820}
+    td{padding:15px 18px;border-top:1px solid #edf1f6;font-size:13px}
+    tr:hover td{background:#fbfcff}
+    .fleet-n{font-weight:810;color:#1b2a42}.vehicle-model{font-size:11px;color:var(--muted);margin-top:3px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:850;letter-spacing:.15px;white-space:nowrap}
+    .badge.red{background:#fff0f0;color:#b42c33}.badge.yellow{background:#fff5e3;color:#9d6400}.badge.green{background:#e9f8f1;color:#077549}.badge.grey{background:#f0f3f7;color:#68788e}
+    .dot{width:6px;height:6px;background:currentColor;border-radius:50%}
+    .mini{border:1px solid #dbe5f3;background:#fff;padding:7px 10px;border-radius:8px;color:#31557f;font-size:12px;font-weight:780}
+    .mini:hover{background:var(--blue-soft)}
+    .empty{padding:48px 15px;text-align:center;color:var(--muted)}
+    .foot-row{padding:13px 24px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;display:flex;justify-content:space-between}
+    .note{display:flex;align-items:center;gap:10px;padding:14px 18px;background:#ecf3ff;color:#2e5a98;font-size:12px;font-weight:650;border-radius:12px;margin-bottom:20px}
+    .progress{height:7px;display:flex;border-radius:999px;background:#edf1f7;overflow:hidden;margin-bottom:20px}
+    .progress > div{height:100%;min-width:0}
+    .overlay{position:fixed;inset:0;background:rgba(11,23,44,.54);z-index:10;display:none;align-items:center;justify-content:center;padding:14px}
+    .overlay.open{display:flex}
+    .dialog{background:white;border-radius:18px;width:min(100%,600px);max-height:94vh;display:flex;flex-direction:column;box-shadow:0 25px 100px #07122560;overflow:hidden}
+    .dialog-head{padding:22px 26px 16px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--line)}
+    .dialog-head h2{margin:1px 0 4px;font-size:22px}.x{border:0;background:#f2f5fa;color:#46546b;width:33px;height:33px;border-radius:9px;font-size:19px}
+    .dialog-body{padding:22px 26px;overflow:auto}
+    .data-ribbon{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:15px;border-radius:12px;background:#f4f7fb;margin-bottom:20px}
+    .ribbon-label{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:800}.ribbon-num{font-weight:830;font-size:17px;margin-top:4px}
+    .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .field{display:flex;flex-direction:column;gap:6px}.field.span{grid-column:1/-1}
+    .field label{font-weight:740;font-size:12px}.field small{color:var(--muted);font-size:11px}
+    .field input,.field textarea{border-radius:10px;border:1px solid #d4deeb;padding:11px 12px;min-width:0;outline:none;background:#fff;width:100%}
+    .field input:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dce8ff}
+    .field textarea{min-height:75px;resize:vertical}
+    .dialog-footer{display:flex;justify-content:space-between;gap:9px;padding:16px 26px;background:#fbfcff;border-top:1px solid var(--line);flex-wrap:wrap}
+    .toast{position:fixed;bottom:20px;right:20px;z-index:30;background:#1e3a5d;color:white;padding:13px 18px;border-radius:10px;max-width:360px;box-shadow:0 8px 30px #1b2f4d40;display:none}
+    .toast.show{display:block}
+    .loading{opacity:.7;pointer-events:none}
+    @media(max-width:950px){.layout{grid-template-columns:1fr}.sidebar{padding:14px 18px;flex-direction:row;align-items:center;justify-content:space-between}.sidebar .menu,.side-foot{display:none}.main{padding:22px 15px 48px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.top{flex-wrap:wrap}}
+    @media(max-width:550px){.grid{gap:8px}.stat{padding:16px}.stat .value{font-size:27px}.panel-top{padding:18px}.filters{margin:0 18px 14px}.fields{grid-template-columns:1fr}.data-ribbon{grid-template-columns:1fr 1fr}.dialog-body{padding:17px}.dialog-head,.dialog-footer{padding:16px}}
+
+    .diary-controls{display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:12px;align-items:end}
+    .diary-controls select,.diary-controls input{background:#fff;border:1px solid #d4deeb;border-radius:10px;padding:10px;width:100%;min-width:0}
+    @media(max-width:900px){.diary-controls{grid-template-columns:1fr 1fr}.diary-controls .btn{width:100%}}
+    [hidden]{display:none!important}
+    .home-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .home-card{display:flex;flex-direction:column;text-align:left;gap:8px;padding:23px;border-radius:16px;background:#fff;color:var(--text);border:1px solid var(--line);min-height:168px;box-shadow:0 8px 20px rgba(15,33,61,.025)}
+    .home-card:hover,.home-card:focus-visible{border-color:#85aaff;box-shadow:0 7px 26px #2167f41a;outline:none}
+    .home-card strong{font-size:17px}.home-card small{font-size:12px;color:var(--muted)}
+    .home-icon{font-size:28px}
+    @media(max-width:800px){.home-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:480px){.home-grid{grid-template-columns:1fr}.home-card{min-height:118px;padding:16px}}
   </style>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
-  <h2>MM Intelligence</h2>
-  <p>Leitor de QR Code dos Motoristas</p>
-
-  <button id="iniciar" onclick="abrirCamera()">
-    Abrir câmera
-  </button>
-
-  <div id="reader"></div>
-  <p id="status">Pronto para leitura.</p>
-
-  <div id="resultado" hidden>
-    <p>QR Code identificado!</p>
-    <button onclick="copiarCodigo()">Copiar QR Code</button>
-   <a id="voltar" href="#" target="_self">Voltar ao MM Intelligence</a>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-logo">🚑</div><div><div>MM Intelligence</div><div class="brand-sub">Transporte da Saúde</div></div></div>
+    <div class="menu"><div class="nav-title">SISTEMA</div><button id="navHome" class="nav-btn active">⌂ &nbsp; Início</button><button id="navDriver" class="nav-btn">▣ &nbsp; Área do Motorista</button><button id="navFleet" class="nav-btn">▦ &nbsp; Painel da frota</button><button id="sideRefresh" class="nav-btn">↻ &nbsp; Atualizar dados</button></div>
+    <div class="side-foot">Secretaria de Saúde<br>Uso administrativo • Versão 1.2</div>
+  </aside>
+  <main class="main">
+    <section id="homeView">
+      <div class="eyebrow">Painel administrativo</div>
+      <h1>Bem-vindo ao MM Intelligence</h1>
+      <p class="muted" style="margin:0 0 26px">Gestão do transporte da saúde • Acesso rápido às ferramentas.</p>
+      <div class="home-grid">
+        <button class="home-card" id="homeRegister"><span class="home-icon">📝</span><strong>Registrar viagem</strong><small>Abrir formulário existente</small></button>
+        <button class="home-card" id="homeFleet"><span class="home-icon">🚐</span><strong>Gestão da frota</strong><small>Veículos, KM e manutenção</small></button>
+        <button class="home-card" id="homeDriver"><span class="home-icon">👥</span><strong>Área do Motorista</strong><small>QR Code, saída e chegada</small></button>
+        <button class="home-card" id="homeDiary"><span class="home-icon">📋</span><strong>Diário de bordo</strong><small>Consultar e imprimir por mês</small></button>
+        <button class="home-card" id="homeMaintenance"><span class="home-icon">🔧</span><strong>Manutenção</strong><small>Controle já disponível</small></button>
+        <button class="home-card" data-soon="Relatórios"><span class="home-icon">📊</span><strong>Relatórios</strong><small>Em desenvolvimento</small></button>
+      </div>
+      <div class="note" style="margin-top:20px">ℹ️ As informações existentes da frota e o formulário de viagens foram preservados. Os módulos marcados como “Em desenvolvimento” ainda não gravam dados.</div>
+    </section>
+    <section id="driverView" hidden>
+      <div class="eyebrow">Área operacional</div><h1>Área do Motorista</h1>
+      <p class="muted">Leia o QR Code do veículo e registre a saída ou a chegada, diretamente no MM Intelligence.</p>
+      <div class="panel" style="max-width:720px;padding:22px;margin-top:20px">
+        <button class="btn primary" id="driverScan" type="button">📷 Abrir leitor de QR Code</button>
+        <button class="btn" id="driverStop" type="button" hidden>Fechar câmera</button>
+        <div style="margin-top:10px">
+          <button class="btn" id="driverPhotoButton" type="button">📸 Usar câmera do celular / escolher foto do QR Code</button>
+          <input id="driverPhoto" type="file" accept="image/*" capture="environment" hidden aria-label="Foto do QR Code">
+        </div>
+        <div id="driverReader" style="max-width:440px;margin:15px auto" hidden></div>
+        <div class="field" style="margin-top:16px"><label for="driverLink">Alternativa: cole o link do QR Code</label><input id="driverLink" type="url" placeholder="https://docs.google.com/forms/..." autocomplete="off"></div>
+        <button class="btn" id="driverIdentify" type="button" style="margin-top:10px">Identificar veículo pelo link</button>
+        <div id="driverIdentified" hidden style="margin-top:18px;padding:13px;border-radius:10px;background:#eaf2ff"></div>
+        <form id="driverTrip" hidden style="margin-top:18px">
+          <div class="fields">
+            <div class="field span"><label>Tipo de registro</label><div style="display:flex;gap:20px;align-items:center"><label><input type="radio" name="driverTipo" value="SAÍDA" required> Saída</label><label><input type="radio" name="driverTipo" value="RETORNO" required> Chegada / Retorno</label></div></div>
+            <div class="field"><label for="driverKm">Quilometragem</label><input id="driverKm" type="text" inputmode="numeric" pattern="[0-9]+" placeholder="Ex.: 344536" required></div>
+            <div class="field"><label for="driverName">Nome do motorista</label><input id="driverName" type="text" maxlength="100" required></div>
+            <div class="field span"><label for="driverCode">Código da viagem</label><input id="driverCode" type="text" maxlength="80" required></div>
+          </div>
+          <button class="btn primary" id="driverSave" type="submit" style="margin-top:18px">Salvar registro</button>
+        </form>
+        <div id="driverStatus" role="status" style="margin-top:16px;color:#35577e">Pronto para ler o QR Code.</div>
+        <p class="caption" style="margin-top:12px">Não registre nomes ou informações de pacientes. Os dados são gravados em MM_VIAGENS_APP.</p>
+      </div>
+    </section>
+    <section id="diaryView" hidden>
+      <div class="eyebrow">Histórico de viagens</div><h1>Diário de bordo mensal</h1>
+      <p class="muted">Escolha a frota e o mês. Visualize os registros oficiais e imprima em A4 ou salve como PDF.</p>
+      <div class="panel" style="padding:22px;margin:20px 0">
+        <div class="diary-controls">
+          <div class="field"><label for="diaryVehicle">Veículo</label><select id="diaryVehicle" aria-label="Veículo"><option value="">Selecione a frota</option></select></div>
+          <div class="field"><label for="diaryMonth">Mês</label><select id="diaryMonth"></select></div>
+          <div class="field"><label for="diaryYear">Ano</label><input id="diaryYear" type="number" min="2020" max="2100" step="1"></div>
+          <button class="btn primary" id="diaryLoad" type="button">Consultar</button>
+          <button class="btn" id="diaryPrint" type="button" disabled>🖨️ Imprimir / PDF</button>
+        </div>
+      </div>
+      <div id="diaryMessage" class="note">Selecione a frota e clique em Consultar.</div>
+      <div id="diaryResult" class="panel" hidden>
+        <div class="panel-top"><div><h2 id="diaryTitle">Diário de bordo</h2><p class="caption" id="diarySubtitle"></p></div><strong id="diaryTotal"></strong></div>
+        <div class="table-wrap"><table><thead><tr><th>Data/hora</th><th>Tipo</th><th>Motorista</th><th>Destino</th><th>KM informado</th><th>KM percurso</th></tr></thead><tbody id="diaryRows"></tbody></table></div>
+        <div id="diaryWarnings" style="padding:16px 22px;font-size:12px;color:#795c1d"></div>
+      </div>
+    </section>
+    <section id="fleetView" hidden>
+    <div class="top">
+      <div><div class="eyebrow">Painel administrativo</div><h1>Visão geral da frota</h1><div class="muted">Acompanhe quilometragem, trocas de óleo e revisões em um só lugar.</div></div>
+      <div class="right-actions"><a class="btn" target="_blank" rel="noopener" href="#" id="sheetLink">↗ Planilha</a><button class="btn primary" id="refreshBtn">↻ Atualizar</button></div>
+    </div>
+    <div class="note" id="banner">ℹ️ &nbsp; Os indicadores mostram apenas os dados registrados. Veículos sem histórico ficam como “DADOS INCOMPLETOS”.</div>
+<div id="auditBox" style="display:none;margin:-6px 0 20px;padding:13px 18px;border-radius:12px;border:1px solid #f6d398;background:#fffaf0;color:#6a4a11;font-size:13px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><span id="auditSummary">Conferir registros de KM</span><button class="btn" id="auditBtn" type="button">Ver ocorrências</button></div>
+    <section class="grid" aria-label="Indicadores da frota">
+      <div class="stat"><div class="stat-icon">🚐</div><div class="lbl">Veículos cadastrados</div><div class="value" id="sTotal">—</div><div class="muted">Frota da saúde</div></div>
+      <div class="stat red"><div class="stat-icon">⚠️</div><div class="lbl">Manutenção urgente</div><div class="value" id="sUrgente">—</div><div class="muted">Revisão ou óleo vencido</div></div>
+      <div class="stat yellow"><div class="stat-icon">🗓️</div><div class="lbl">Programar manutenção</div><div class="value" id="sProgramar">—</div><div class="muted">Próximos vencimentos</div></div>
+      <div class="stat green"><div class="stat-icon">✓</div><div class="lbl">Manutenção em dia</div><div class="value" id="sEmDia">—</div><div class="muted">Óleo e revisão conferidos</div></div>
+    </section>
+    <div class="progress" id="progress"><div></div></div>
+    <section class="panel">
+      <div class="panel-top"><div><h2>Veículos e manutenção</h2><p class="caption">Pesquise pelo número da frota, placa ou modelo. Clique em Gerenciar para atualizar dados.</p></div><div class="searchbox"><span>⌕</span><input type="search" id="search" placeholder="Buscar veículo ou placa..." aria-label="Buscar veículo ou placa"></div></div>
+      <div class="filters" id="filters">
+        <button class="filter active" data-filter="TODOS">Todos</button>
+        <button class="filter" data-filter="URGENTE">Urgentes</button>
+        <button class="filter" data-filter="PROGRAMAR">Programar</button>
+        <button class="filter" data-filter="EM DIA">Em dia</button>
+        <button class="filter" data-filter="DADOS INCOMPLETOS">Pendentes</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Frota / veículo</th><th>Placa</th><th>KM atual</th><th>Próxima troca</th><th>KM restantes</th><th>Prioridade</th><th>Ação</th></tr></thead><tbody id="rows"><tr><td colspan="7" class="empty">Carregando informações…</td></tr></tbody></table></div>
+      <div class="foot-row"><span id="count">—</span><span id="updated">—</span></div>
+    </section>
+    </section>
+  </main>
+</div>
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+  <div class="dialog">
+    <div class="dialog-head"><div><div class="eyebrow">Controle do veículo</div><h2 id="dialogTitle">Frota</h2><div id="dialogSub" class="muted"></div></div><button id="closeDialog" class="x" title="Fechar" aria-label="Fechar">×</button></div>
+    <div class="dialog-body">
+      <div class="data-ribbon"><div><div class="ribbon-label">KM atual</div><div id="dKm" class="ribbon-num">—</div></div><div><div class="ribbon-label">Próxima troca</div><div id="dNext" class="ribbon-num">—</div></div><div><div class="ribbon-label">KM restantes</div><div id="dRemaining" class="ribbon-num">—</div></div></div>
+      <form id="editForm">
+        <div class="fields">
+          <div class="field"><label for="lastOil">KM da última troca</label><input id="lastOil" type="number" min="0" max="2000000" step="1" placeholder="Ex.: 40272"><small>Digite o KM registrado na ordem de serviço.</small></div>
+          <div class="field"><label for="interval">Intervalo do óleo (KM)</label><input id="interval" type="number" min="100" max="50000" step="1" placeholder="Ex.: 10000"><small>Conforme plano de manutenção.</small></div>
+          <div class="field span"><label for="reviewDate">Data da próxima revisão</label><input id="reviewDate" type="date"><small>Deixe em branco se ainda não houver data confirmada.</small></div>
+          <div class="field span"><label for="notes">Observações da manutenção</label><textarea id="notes" maxlength="500" placeholder="Anote informações úteis, sem dados de pacientes."></textarea></div>
+        </div>
+      </form>
+    </div>
+    <div class="dialog-footer"><a id="formLink" class="btn" target="_blank" rel="noopener" href="#">↗ Abrir formulário do veículo</a><div style="display:flex;gap:8px"><button class="btn" id="cancelSave">Cancelar</button><button class="btn primary" id="saveBtn" type="submit" form="editForm">Salvar manutenção</button></div></div>
   </div>
+</div>
+<div class="overlay" id="auditOverlay" role="dialog" aria-modal="true" aria-labelledby="auditTitle">
+ <div class="dialog" style="width:min(100%,870px)">
+  <div class="dialog-head"><div><div class="eyebrow">Verificação automática</div><h2 id="auditTitle">Conferência de quilometragem</h2><p class="caption">Estes alertas não comprovam erro nem excluem registros. Verifique o histórico original antes de qualquer correção.</p></div><button id="closeAudit" class="x" aria-label="Fechar conferência">×</button></div>
+  <div class="dialog-body" id="auditBody" style="padding:18px">Sem ocorrências.</div>
+ </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function(){
+  'use strict';
+  let vehicles=[], summary={}, current=null, selected='TODOS', auditoria={quantidade:0,pendencias:[],frotas:{}};
+  const $=id=>document.getElementById(id);
+  const fmt=n=>(n===null||n===undefined||n==='')?'—':new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(n);
+  const esc=x=>String(x===null||x===undefined?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const badge=s=>s==='URGENTE'?'red':s==='PROGRAMAR'?'yellow':s==='EM DIA'?'green':'grey';
+  function toast(msg){const e=$('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),4500)}
+  function setBusy(on){$('refreshBtn').disabled=on;$('saveBtn').disabled=on;if(on)$('refreshBtn').textContent='Atualizando…';else $('refreshBtn').textContent='↻ Atualizar'}
+  function render(){
+    $('sTotal').textContent=fmt(summary.total||0);
+    $('sUrgente').textContent=fmt(summary.urgente||0);
+    $('sProgramar').textContent=fmt(summary.programar||0);
+    $('sEmDia').textContent=fmt(summary.emDia||0);
+    const total=summary.total||1;
+    const parts=[['var(--red)',summary.urgente],['#e3a22f',summary.programar],['var(--green)',summary.emDia],['#dbe3ee',summary.pendentes]];
+    $('progress').innerHTML=parts.map(p=>'<div style="width:'+Math.max(0,(p[1]||0)*100/total)+'%;background:'+p[0]+'"></div>').join('');
+    const query=$('search').value.toLocaleLowerCase('pt-BR').trim();
+    const filtered=vehicles.filter(v=>(selected==='TODOS'||v.prioridade===selected)&&(!query||[v.frota,v.placa,v.modelo,v.idFormulario].join(' ').toLocaleLowerCase('pt-BR').includes(query)));
+    $('count').textContent=filtered.length+' de '+vehicles.length+' veículos';
+    $('rows').innerHTML=filtered.length?filtered.map(v=>'<tr><td><div class="fleet-n">Frota '+esc(v.frota)+'</div><div class="vehicle-model">'+esc(v.modelo)+'</div></td><td>'+esc(v.placa)+'</td><td><strong>'+fmt(v.kmAtual)+'</strong>'+(auditoria.frotas?.[v.frota]?' <span title="Há registros de KM para conferir" style="color:#b27610">⚠️</span>':'')+'</td><td>'+fmt(v.proximaTroca)+'</td><td>'+fmt(v.kmRestantes)+'</td><td><span class="badge '+badge(v.prioridade)+'"><span class="dot"></span>'+esc(v.prioridade)+'</span></td><td><button class="mini" data-frota="'+v.frota+'">Gerenciar</button></td></tr>').join(''):'<tr><td colspan="7" class="empty">Nenhum veículo encontrado com esses filtros.</td></tr>';
+  }
 
-  <script>
-    const appUrl = "https://script.google.com/macros/s/AKfycbyaykiCPBY4XbfV9_LP-St_IFup4kYY-kvOgR3i58e9EwqZa3CrXAI3p6Puwt_lQO9w/exec";
-    let scanner;
-    let codigoLido = "";
+  function updateAuditoria(){
+    const issues=auditoria.pendencias||[];
+    const box=$('auditBox');
+    box.style.display=(issues.length||auditoria.mensagem)?'flex':'none';
+    $('auditSummary').textContent=auditoria.mensagem?'⚠️ '+auditoria.mensagem:'⚠️ '+issues.length+' ocorrência(s) de KM para conferir. Nenhum registro foi apagado ou alterado.';
+    $('auditBody').innerHTML=issues.length?'<div class="table-wrap"><table style="min-width:650px"><thead><tr><th>Frota</th><th>Data/hora</th><th>KM anterior</th><th>KM informado</th><th>Motivo</th></tr></thead><tbody>'+issues.map(r=>'<tr><td><strong>'+esc(r.frota)+'</strong></td><td>'+esc(r.data)+'</td><td>'+fmt(r.kmAnterior)+'</td><td>'+fmt(r.km)+'</td><td>'+esc(r.motivo)+'</td></tr>').join('')+'</tbody></table></div>':'Nenhuma divergência detectada pelos critérios atuais.';
+  }
+  function mockData(){
+    const demo=[{frota:479,placa:'UBP 6B73',modelo:'PEUGEOT BOXER',idFormulario:'VEICULO 002 - VAN BOXER 479',kmAtual:43008,kmUltimaTroca:40272,intervaloKm:10000,proximaTroca:50272,kmRestantes:7264,statusOleo:'EM DIA',statusRevisao:'SEM DATA',dataRevisao:'',prioridade:'DADOS INCOMPLETOS',observacoes:''},{frota:494,placa:'UCE 5I94',modelo:'SPIN CHEVROLET',idFormulario:'VEICULO 001 - SPIN 494',kmAtual:31518,kmUltimaTroca:31140,intervaloKm:10000,proximaTroca:41140,kmRestantes:9622,statusOleo:'EM DIA',statusRevisao:'SEM DATA',dataRevisao:'',prioridade:'DADOS INCOMPLETOS',observacoes:''},{frota:139,placa:'ATY-9289',modelo:'AMBULÂNCIA RENAULT MASTER',idFormulario:'FROTA 139 - ATY-9289',kmAtual:null,kmUltimaTroca:null,intervaloKm:null,proximaTroca:null,kmRestantes:null,statusOleo:'SEM DADOS',statusRevisao:'SEM DATA',dataRevisao:'',prioridade:'DADOS INCOMPLETOS',observacoes:''}];
+    return {vehicles:demo,summary:{total:3,urgente:0,programar:0,emDia:0,pendentes:3,comKm:2,oleoEmDia:2},updatedAt:'Prévia ilustrativa',formUrl:'https://docs.google.com/forms/d/e/1FAIpQLSd-rUcSR5wl7Oc7zJoZxVIK-jqe5o-DnuXj4KizmqIPGsACLw/viewform',formEntry:'entry.307201233'};
+  }
+  let formUrl='',formEntry='';
+  function accept(data){vehicles=data.vehicles||[];summary=data.summary||{};auditoria=data.auditoria||{quantidade:0,pendencias:[],frotas:{}};updateAuditoria();formUrl=data.formUrl||'';formEntry=data.formEntry||'';if(data.sheetUrl){$('sheetLink').href=data.sheetUrl;}else{$('sheetLink').style.display='none';}$('updated').textContent='Atualizado: '+(data.updatedAt||'—');render();populateDiaryVehicles();setBusy(false)}
+  function refresh(){setBusy(true);if(typeof google==='undefined'||!google.script||!google.script.run){accept(mockData());$('banner').textContent='⚠️ MODO DEMONSTRAÇÃO — Esta prévia usa apenas 3 veículos ilustrativos. Para acessar os dados reais, instale o aplicativo pelo Google Apps Script.';return;}google.script.run.withSuccessHandler(accept).withFailureHandler(e=>{setBusy(false);$('rows').innerHTML='<tr><td colspan="7" class="empty">Falha ao carregar a planilha. Confira as permissões.</td></tr>';toast('Erro: '+(e.message||e))}).mmListarFrota();}
+  function openDetail(frota){current=vehicles.find(v=>Number(v.frota)===Number(frota));if(!current)return;$('dialogTitle').textContent='Frota '+current.frota;$('dialogSub').textContent=current.placa+' · '+current.modelo;$('dKm').textContent=fmt(current.kmAtual);$('dNext').textContent=fmt(current.proximaTroca);$('dRemaining').textContent=fmt(current.kmRestantes);$('lastOil').value=current.kmUltimaTroca===null?'':current.kmUltimaTroca;$('interval').value=current.intervaloKm===null?'':current.intervaloKm;$('reviewDate').value=current.dataRevisao||'';$('notes').value=current.observacoes||'';const name=current.idFormulario||'';const url=formUrl+'?usp=pp_url&'+encodeURIComponent(formEntry)+'='+encodeURIComponent(name);$('formLink').href=url;$('formLink').style.display=name?'inline-flex':'none';$('overlay').classList.add('open');$('lastOil').focus();}
+  function closeDetail(){$('overlay').classList.remove('open');current=null;}
+  function save(ev){ev.preventDefault();if(!current)return;if(typeof google==='undefined'||!google.script||!google.script.run){toast('Modo demonstração: nenhuma alteração foi feita na planilha.');return;}const data={frota:current.frota,kmUltimaTroca:$('lastOil').value,intervaloKm:$('interval').value,dataRevisao:$('reviewDate').value,observacoes:$('notes').value};if(!confirm('Salvar manutenção da frota '+current.frota+' na planilha oficial?'))return;setBusy(true);google.script.run.withSuccessHandler(r=>{closeDetail();refresh();toast(r.logSalvo?'Manutenção salva e registrada no histórico.':'Manutenção salva. Confira o histórico de alterações.');}).withFailureHandler(e=>{setBusy(false);toast('Não foi possível salvar: '+(e.message||e))}).mmSalvarManutencao(data);}
+  let currentDiary=null;
+  const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  $('diaryMonth').innerHTML=months.map((m,i)=>'<option value="'+(i+1)+'">'+m+'</option>').join('');
+  $('diaryMonth').value=String(new Date().getMonth()+1);
+  $('diaryYear').value=String(new Date().getFullYear());
+  function populateDiaryVehicles(){
+    const previous=$('diaryVehicle').value;
+    $('diaryVehicle').innerHTML='<option value="">Selecione a frota</option>'+vehicles.map(v=>'<option value="'+esc(v.frota)+'">Frota '+esc(v.frota)+' · '+esc(v.placa)+'</option>').join('');
+    if(vehicles.some(v=>String(v.frota)===previous))$('diaryVehicle').value=previous;
+  }
+  function loadDiary(){
+    const frota=$('diaryVehicle').value, mes=Number($('diaryMonth').value), ano=Number($('diaryYear').value);
+    if(!frota||!Number.isInteger(ano)||ano<2020||ano>2100){toast('Selecione veículo, mês e ano válidos.');return;}
+    if(typeof google==='undefined'||!google.script||!google.script.run){toast('Consulte o diário pelo aplicativo implantado, conectado à planilha.');return;}
+    $('diaryLoad').disabled=true;$('diaryMessage').textContent='Carregando viagens oficiais…';$('diaryResult').hidden=true;$('diaryPrint').disabled=true;currentDiary=null;
+    google.script.run.withSuccessHandler(d=>{
+      $('diaryLoad').disabled=false;currentDiary=d;
+      $('diaryTitle').textContent='Frota '+d.frota+' · '+months[d.mes-1]+'/'+d.ano;
+      $('diarySubtitle').textContent=d.placa+' · '+d.modelo+' · '+d.registros.length+' registros';
+      $('diaryTotal').textContent='KM pareados: '+fmt(d.totalKm);
+      $('diaryRows').innerHTML=d.registros.length?d.registros.map(r=>'<tr><td>'+esc(r.data)+'</td><td>'+esc(r.tipo)+'</td><td>'+esc(r.motorista||'—')+'</td><td>'+esc(r.destino||'—')+'</td><td>'+fmt(r.km)+'</td><td>'+fmt(r.percorrido)+'</td></tr>').join(''):'<tr><td colspan="6" class="empty">Não há registros válidos neste período.</td></tr>';
+      $('diaryWarnings').innerHTML=(d.avisos||[]).map(a=>'<div>⚠️ '+esc(a)+'</div>').join('');
+      $('diaryMessage').textContent='Consulta concluída. Confira os registros antes de imprimir.';
+      $('diaryResult').hidden=false;$('diaryPrint').disabled=d.registros.length===0;
+    }).withFailureHandler(e=>{$('diaryLoad').disabled=false;$('diaryMessage').textContent='Erro ao consultar: '+(e.message||e);toast('Não foi possível carregar o diário.');}).mmDiarioBordo(frota,ano,mes);
+  }
+  function printDiary(){
+    if(!currentDiary)return;
+    const d=currentDiary;
+    const rows=d.registros.map(r=>'<tr><td>'+esc(r.data)+'</td><td>'+esc(r.tipo)+'</td><td>'+esc(r.motorista||'—')+'</td><td>'+esc(r.destino||'—')+'</td><td>'+fmt(r.km)+'</td><td>'+fmt(r.percorrido)+'</td></tr>').join('');
+    const warnings=(d.avisos||[]).map(a=>'<p>'+esc(a)+'</p>').join('');
+    const win=window.open('','_blank');if(!win){toast('Permita pop-ups para imprimir o diário.');return;}
+    const page='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Diário de bordo - Frota '+esc(d.frota)+'</title><style>@page{size:A4 landscape;margin:12mm}body{font:11px Arial,sans-serif;color:#17253b}h1{font-size:19px;margin:0 0 8px}.heading{border-bottom:2px solid #1d3961;padding-bottom:12px;margin-bottom:15px}.meta{display:flex;gap:25px;margin:10px 0 15px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #abb8c9;padding:5px 6px;text-align:left;word-break:break-word}th{background:#edf2fa}tr{break-inside:avoid}.tot{margin-top:12px;font-weight:bold}.warn{font-size:9px;color:#6c572f;margin-top:18px}.warn p{margin:3px 0}.sign{margin:50px 0 0;text-align:right}.sign span{display:inline-block;border-top:1px solid #333;padding:7px 50px}button{position:fixed;right:12px;top:12px;padding:8px;background:#2167f4;color:#fff;border:0;border-radius:5px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Imprimir / Salvar PDF</button><div class="heading"><strong>MM INTELLIGENCE • TRANSPORTE DA SAÚDE</strong><h1>Diário de Bordo — '+esc(months[d.mes-1])+'/'+esc(d.ano)+'</h1></div><div class="meta"><span><b>Frota:</b> '+esc(d.frota)+'</span><span><b>Placa:</b> '+esc(d.placa)+'</span><span><b>Modelo:</b> '+esc(d.modelo)+'</span></div><table><thead><tr><th>Data / hora</th><th>Tipo</th><th>Motorista</th><th>Destino</th><th>KM informado</th><th>KM percurso</th></tr></thead><tbody>'+rows+'</tbody></table><div class="tot">Total de KM calculados (pares de saída e retorno): '+fmt(d.totalKm)+' km • '+d.viagensComKm+' pares válidos</div><div class="warn">'+warnings+'</div><div class="sign"><span>Assinatura do responsável</span></div><p style="font-size:9px">Gerado em: '+esc(d.geradoEm||'')+' • Relatório administrativo sujeito à conferência</p></body></html>';
+    win.document.open();win.document.write(page);win.document.close();
+  }
+  $('homeDiary').addEventListener('click',()=>{showView('diary');populateDiaryVehicles()});
+  $('diaryLoad').addEventListener('click',loadDiary);
+  $('diaryPrint').addEventListener('click',printDiary);
+  function showView(view){
+    $('homeView').hidden=view!=='home';
+    $('fleetView').hidden=view!=='fleet';
+    $('diaryView').hidden=view!=='diary';
+    $('driverView').hidden=view!=='driver';
+    $('navHome').classList.toggle('active',view==='home');
+    $('navFleet').classList.toggle('active',view==='fleet');
+    $('navDriver').classList.toggle('active',view==='driver');
+    if(view==='fleet')refresh();
+    window.scrollTo(0,0);
+  }
+  $('navHome').addEventListener('click',()=>showView('home'));
+  $('navDriver').addEventListener('click',()=>showView('driver'));
+  $('homeDriver').addEventListener('click',()=>showView('driver'));
+  $('navFleet').addEventListener('click',()=>showView('fleet'));
+  $('homeFleet').addEventListener('click',()=>showView('fleet'));
+  $('homeMaintenance').addEventListener('click',()=>showView('fleet'));
+  $('homeRegister').addEventListener('click',()=>{
+    if(!formUrl){toast('O link do formulário ainda não foi carregado. Atualize os dados.');return;}
+    window.open(formUrl,'_blank','noopener,noreferrer');
+  });
+  document.querySelectorAll('[data-soon]').forEach(b=>b.addEventListener('click',()=>toast(b.dataset.soon+' será desenvolvido em uma próxima etapa.')));
+  $('auditBtn').addEventListener('click',()=>{$('auditOverlay').classList.add('open')});$('closeAudit').addEventListener('click',()=>{$('auditOverlay').classList.remove('open')});$('auditOverlay').addEventListener('click',e=>{if(e.target===$('auditOverlay'))$('auditOverlay').classList.remove('open')});
+  $('refreshBtn').addEventListener('click',refresh);$('sideRefresh').addEventListener('click',refresh);$('search').addEventListener('input',render);
+  $('filters').addEventListener('click',e=>{const b=e.target.closest('button[data-filter]');if(!b)return;selected=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render()});
+  $('rows').addEventListener('click',e=>{const b=e.target.closest('button[data-frota]');if(b)openDetail(b.dataset.frota)});
+  $('closeDialog').addEventListener('click',closeDetail);$('cancelSave').addEventListener('click',closeDetail);$('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeDetail()});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();$('auditOverlay').classList.remove('open')}});$('editForm').addEventListener('submit',save);
 
-    document.getElementById("voltar").href = appUrl + "?qr=" + encodeURIComponent(codigoLido);
-
-    async function abrirCamera() {
-      const status = document.getElementById("status");
-      const botao = document.getElementById("iniciar");
-
-      botao.disabled = true;
-      status.textContent = "Iniciando câmera...";
-
-      try {
-        if (!window.isSecureContext) {
-          throw new Error("A página precisa estar em HTTPS.");
-        }
-
-        if (typeof Html5Qrcode === "undefined") {
-          throw new Error("Biblioteca QR Code não carregada.");
-        }
-
-        scanner = new Html5Qrcode("reader");
-
-        await scanner.start(
-          { facingMode: "environment" },
-          { fps: 10 },
-          async (texto) => {
-            if (codigoLido) return;
-            codigoLido = texto;
-document.getElementById("voltar").href = appUrl;
-            status.textContent = "QR Code lido!";
-            document.getElementById("resultado").hidden = false;
-
-            try {
-              await scanner.stop();
-            } catch (e) {
-              console.warn(e);
-            }
-          }
-        );
-
-        status.textContent = "Aponte a câmera para o QR Code.";
-      } catch (erro) {
-        status.textContent = "Erro: " + (erro.message || erro);
-        botao.disabled = false;
-      }
+  // ===== Área do Motorista: QR Code + registros operacionais =====
+  let driverVehicle=null,driverScanner=null,driverScanning=false,driverRequestId=null,driverBusy=false;
+  function driverStatus(msg,failed=false){$('driverStatus').textContent=msg;$('driverStatus').style.color=failed?'#b42c33':'#35577e';}
+  function driverCall(fn,arg,success){
+    if(typeof google==='undefined'||!google.script||!google.script.run){driverStatus('Abra o aplicativo implantado no Apps Script.',true);return;}
+    google.script.run.withSuccessHandler(success).withFailureHandler(e=>{driverBusy=false;$('driverSave').disabled=false;driverStatus('Erro: '+(e.message||e),true);})[fn](arg);
+  }
+  function driverIdentify(link){
+    if(!link.trim()){driverStatus('Leia o QR Code ou cole o link.',true);return;}
+    driverStatus('Conferindo veículo...');
+    driverCall('motIdentificarQr',link.trim(),v=>{
+      driverVehicle=v;driverRequestId='req-'+Date.now()+'-'+Math.random().toString(36).slice(2,14);
+      $('driverIdentified').textContent='Frota '+v.frota+' • '+v.modelo+' • Placa '+v.placa;
+      $('driverIdentified').hidden=false;$('driverTrip').hidden=false;
+      driverStatus('Veículo identificado. Preencha os dados da viagem.');
+    });
+  }
+  async function driverStop(){
+    if(driverScanner&&driverScanning){try{await driverScanner.stop();await driverScanner.clear();}catch(e){}}
+    driverScanning=false;$('driverReader').hidden=true;$('driverStop').hidden=true;$('driverScan').hidden=false;
+  }
+  $('driverScan').addEventListener('click', () => {
+  window.open(
+    'https://marioosdrove1507-ship-it.github.io/mm-intelligence-qr/',
+    '_blank'
+  );
+});
+  // Leitura alternativa: captura foto com app nativo do celular, sem usar câmera ao vivo no navegador.
+  $('driverPhotoButton').addEventListener('click',()=>{$('driverPhoto').click();});
+  $('driverPhoto').addEventListener('change',async e=>{
+  const file = e.target.files?.[0];
+    if(!file)return;
+    $('driverPhotoButton').disabled=true;
+    try{
+      if(typeof Html5Qrcode==='undefined')throw new Error('Biblioteca de QR Code indisponível. Verifique a internet.');
+      if(driverScanning)await driverStop();
+      $('driverReader').hidden=false;
+      const scanner=new Html5Qrcode('driverReader');
+      // scanFile interpreta a imagem local; não grava nem envia a fotografia.
+      let code;
+      try{code=await scanner.scanFile(file,true);}
+      finally{try{await scanner.clear();}catch(ignore){} $('driverReader').hidden=true;}
+      $('driverLink').value=code;
+      driverIdentify(code);
+    }catch(err){
+      driverStatus('Não foi possível ler o QR Code na foto. Aproxime a câmera, evite reflexos ou cole o link. '+(err.message||''),true);
+    }finally{
+      e.target.value='';$('driverPhotoButton').disabled=false;
     }
-
-    async function copiarCodigo() {
-      try {
-        await navigator.clipboard.writeText(codigoLido);
-        alert("QR Code copiado! Volte ao MM Intelligence e cole o código.");
-      } catch (erro) {
-        prompt("Copie o QR Code:", codigoLido);
-      }
-    }
-  </script>
+  });
+  $('driverStop').addEventListener('click',driverStop);
+  $('driverIdentify').addEventListener('click',()=>driverIdentify($('driverLink').value));
+  $('driverTrip').addEventListener('submit',e=>{
+    e.preventDefault();if(driverBusy||!driverVehicle)return;
+    const tipo=document.querySelector('input[name="driverTipo"]:checked')?.value;
+    const km=$('driverKm').value.trim(),nome=$('driverName').value.trim(),codigo=$('driverCode').value.trim();
+    if(!tipo||!/^[0-9]+$/.test(km)||nome.length<2||codigo.length<2){driverStatus('Confira saída/chegada, KM, nome e código da viagem.',true);return;}
+    if(!confirm('Confirmar '+tipo+' da frota '+driverVehicle.frota+' com '+km+' km?'))return;
+    driverBusy=true;$('driverSave').disabled=true;driverStatus('Enviando. Não clique novamente.');
+    driverCall('motSalvarViagem',{frota:driverVehicle.frota,identificacao:driverVehicle.rotulo,tipo,km,motorista:nome,codigo,requestId:driverRequestId},res=>{
+      driverBusy=false;$('driverSave').disabled=false;driverStatus(res.mensagem||'Registro confirmado.');
+      if(res.ok){$('driverTrip').reset();$('driverTrip').hidden=true;$('driverIdentified').hidden=true;$('driverLink').value='';driverVehicle=null;driverRequestId=null;}
+    });
+  });
+  // O Apps Script executa este HTML em um iframe: leia a URL externa pela API oficial.
+  function receberQrDaUrl(){
+    if(typeof google==='undefined'||!google.script||!google.script.url||!google.script.url.getLocation)return;
+    google.script.url.getLocation(function(loc){
+      const qr = loc && loc.parameter && loc.parameter.qr;
+      if(typeof qr!=='string'||!qr.trim())return;
+      showView('driver');
+      $('driverLink').value=qr;
+      driverIdentify(qr);
+    });
+  }
+  receberQrDaUrl();
+  refresh();
+})();
+</script>
 </body>
 </html>
