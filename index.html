@@ -92,7 +92,7 @@
           async (texto) => {
             if (codigoLido) return;
             codigoLido = texto;
-document.getElementById("voltar").href = appUrl + "?qr=" + encodeURIComponent(texto);
+document.getElementById("voltar").href = appUrl;
             status.textContent = "QR Code lido!";
             document.getElementById("resultado").hidden = false;
 
