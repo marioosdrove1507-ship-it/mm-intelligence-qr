@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MM Intelligence - Leitor QR Code</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0c1931;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    h2 { color: #fff; }
+    #reader {
+      max-width: 400px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    button, a {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 400px;
+      margin: 12px auto;
+      padding: 15px;
+      border: 0;
+      border-radius: 10px;
+      background: #2167f4;
+      color: white;
+      font-size: 16px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    #resultado {
+      overflow-wrap: anywhere;
+      margin: 16px auto;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+  <h2>MM Intelligence</h2>
+  <p>Leitor de QR Code dos Motoristas</p>
+
+  <button id="iniciar" onclick="abrirCamera()">
+    Abrir câmera
+  </button>
+
+  <div id="reader"></div>
+  <p id="status">Pronto para leitura.</p>
+
+  <div id="resultado" hidden>
+    <p>QR Code identificado!</p>
+    <button onclick="copiarCodigo()">Copiar QR Code</button>
+    <a id="voltar" href="#">Voltar ao MM Intelligence</a>
+  </div>
+
+  <script>
+    const appUrl = "https://script.google.com/macros/s/AKfycbyaykiCPBY4XbfV9_LP-St_IFup4kYY-kvOgR3i58e9EwqZa3CrXAI3p6Puwt_lQO9w/exec";
+    let scanner;
+    let codigoLido = "";
+
+    document.getElementById("voltar").href = appUrl;
+
+    async function abrirCamera() {
+      const status = document.getElementById("status");
+      const botao = document.getElementById("iniciar");
+
+      botao.disabled = true;
+      status.textContent = "Iniciando câmera...";
+
+      try {
+        if (!window.isSecureContext) {
+          throw new Error("A página precisa estar em HTTPS.");
+        }
+
+        if (typeof Html5Qrcode === "undefined") {
+          throw new Error("Biblioteca QR Code não carregada.");
+        }
+
+        scanner = new Html5Qrcode("reader");
+
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10 },
+          async (texto) => {
+            if (codigoLido) return;
+            codigoLido = texto;
+
+            status.textContent = "QR Code lido!";
+            document.getElementById("resultado").hidden = false;
+
+            try {
+              await scanner.stop();
+            } catch (e) {
+              console.warn(e);
+            }
+          }
+        );
+
+        status.textContent = "Aponte a câmera para o QR Code.";
+      } catch (erro) {
+        status.textContent = "Erro: " + (erro.message || erro);
+        botao.disabled = false;
+      }
+    }
+
+    async function copiarCodigo() {
+      try {
+        await navigator.clipboard.writeText(codigoLido);
+        alert("QR Code copiado! Volte ao MM Intelligence e cole o código.");
+      } catch (erro) {
+        prompt("Copie o QR Code:", codigoLido);
+      }
+    }
+  </script>
+</body>
+</html>
