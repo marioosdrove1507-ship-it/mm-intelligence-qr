@@ -66,7 +66,7 @@
     let scanner;
     let codigoLido = "";
 
-    document.getElementById("voltar").href = appUrl;
+    document.getElementById("voltar").href = appUrl + "?qr=" + encodeURIComponent(codigoLido);
 
     async function abrirCamera() {
       const status = document.getElementById("status");
